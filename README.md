@@ -1,113 +1,87 @@
 # OCR Invoice Extraction Pipeline
 
-A Python-based Optical Character Recognition (OCR) system designed to extract structured data from invoice images using pytesseract and AI-powered field extraction.
+A small Python pipeline that reads an invoice image with Tesseract OCR and asks a local Ollama model to turn the raw text into structured JSON.
 
-## 📋 Project Overview
+## Pipeline
 
-This project automates the process of reading invoices from images and extracting key business information such as:
-- Document type
-- Date
-- Sender information  
-- Total amount
-- Key line items (products/services)
-
-## 🚀 Features
-
-- **OCR Processing**: Uses pytesseract for text extraction from images
-- **Image Preprocessing**: OpenCV-based preprocessing to improve OCR accuracy
-- **AI-powered Extraction**: LLM-based field extraction for structured output
-- **JSON Output**: Clean, parseable JSON responses from AI model
-
-## 📁 Project Structure
-
-```
-ocr-project/
-├── main.py              # Main entry point - runs full OCR pipeline
-├── extract.py           # AI-based field extraction using LLM
-├── ocr_test.py          # Simple OCR test script
-├── preprocess.py        # Image preprocessing with OpenCV
-├── invoice-sample.jpg   # Sample invoice image for testing
-└── README.md            # This file
+```mermaid
+flowchart LR
+    A[Invoice image] --> B[Tesseract OCR]
+    B --> C[Raw text]
+    C --> D[Ollama llama3.1]
+    D --> E[Structured JSON]
 ```
 
-## 🛠️ Dependencies
+The current extraction schema contains:
 
-### Python Packages
+- document type;
+- date;
+- sender;
+- total amount;
+- key line items.
+
+## Stack
+
+- Python
+- Tesseract OCR and pytesseract
+- Pillow
+- OpenCV for the optional preprocessing script
+- Ollama with `llama3.1`
+- Requests
+
+## Project structure
+
+| File | Purpose |
+| --- | --- |
+| `main.py` | Runs OCR, sends the text to the model, and prints the result |
+| `extract.py` | Calls Ollama and parses the model response as JSON |
+| `preprocess.py` | Creates a thresholded `processed.png` image |
+| `ocr_test.py` | Prints the raw Tesseract output |
+
+## Requirements
+
+1. Install [Tesseract OCR](https://github.com/tesseract-ocr/tesseract).
+2. Install [Ollama](https://ollama.com/) and download the configured model:
+
 ```bash
-pip install pytesseract pillow requests opencv-python
+ollama pull llama3.1
 ```
 
-### System Requirements
-- Tesseract OCR installed on your system
-  ```bash
-  # Windows (from Scoop)
-  scoop install tesseract
-  
-  # Or download from https://github.com/tesseract-ocr/tesseract/releases
-  ```
-- OpenCV for image processing
-- LLM service running locally (e.g., llama.cpp with Ollama)
+3. Create a Python environment and install the packages:
 
-## 🏃 Running the Project
+```bash
+python -m venv .venv
+pip install -r requirements.txt
+```
 
-### Basic Usage
+On Windows, activate the environment with `.venv\Scripts\Activate.ps1`. On macOS or Linux, use `source .venv/bin/activate`.
 
-Run the main pipeline:
+## Run
+
+Place an invoice image named `invoice-sample.jpg` in the repository root, make sure Ollama is running at `http://localhost:11434`, then run:
+
 ```bash
 python main.py
 ```
 
-This will:
-1. Load the sample invoice image (`invoice-sample.jpg`)
-2. Extract raw text using OCR
-3. Send the text to an LLM for field extraction
-4. Output both raw and structured JSON data
+To inspect only the raw OCR result:
 
-### Test Script
-
-Run a simple OCR test:
 ```bash
 python ocr_test.py
 ```
 
-## 🤖 LLM Configuration
+To generate a simple black-and-white preprocessed image:
 
-The `extract.py` module connects to a local LLM service via Ollama. Make sure you have:
-
-1. **Ollama installed**: https://ollama.ai
-2. **LLM model downloaded**:
-   ```bash
-   ollama pull llama3.1
-   ```
-3. **Service running on localhost:11434**
-
-## 📊 Example Output
-
-```
---- Raw OCR text ---
-INVOICE #12345
-Date: 2026-07-01
-From: ABC Company
-To: XYZ Corp
-Items:
-  - Software License: $100.00
-  - Support Package: $50.00
-Total Amount: $150.00
-
---- Structured output ---
-{"document_type": "invoice", "date": "2026-07-01", "sender": "ABC Company", ...}
+```bash
+python preprocess.py
 ```
 
-## 📝 Notes
+## Current limitations
 
-- The sample invoice (`invoice-sample.jpg`) should be placed in the project directory
-- LLM response is cleaned to extract valid JSON (removes markdown code blocks)
-- Error handling is included for cases where the AI model doesn't return clean JSON
+- input paths, the Ollama URL, and the model name are hard-coded;
+- the repository does not include an invoice image;
+- model output is parsed as JSON but is not validated against a typed schema;
+- the Ollama request has no explicit timeout or retry policy;
+- preprocessing is a separate experiment and is not called by `main.py`.
 
-## 🔧 Customization
-
-Modify the `prompt` variable in `extract.py` to customize which fields you want to extract or change the extraction schema.
-
----
-
-Built with Python, pytesseract, Ollama/LLM, and OpenCV.
+These constraints keep the project easy to understand, while showing the complete OCR-to-LLM extraction flow.
